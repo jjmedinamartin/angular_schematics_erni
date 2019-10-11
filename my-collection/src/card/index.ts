@@ -1,5 +1,5 @@
 import {
-  apply, filter,
+  apply,
   MergeStrategy,
   mergeWith,
   move,
@@ -14,30 +14,31 @@ import {getWorkspace} from "@schematics/angular/utility/config";
 import {parseName} from "@schematics/angular/utility/parse-name";
 import {buildDefaultPath} from "@schematics/angular/utility/project";
 import {strings} from "@angular-devkit/core";
+
+/*
+This function es used by the init function to get the workspace object and apply a little conversion in the name of element that will be created.
+ */
 export function setupOptions(host: Tree, options: any): Tree {
   const workspace = getWorkspace(host);
-  if (!options.project) {
-    options.project = Object.keys(workspace.projects)[0];
-  }
-  const project = workspace.projects[options.project];
-
-  if (options.path === undefined) {
-    options.path = buildDefaultPath(project);
-  }
-
+  const projectKey = Object.keys(workspace.projects)[0];
+  const project = workspace.projects[projectKey];
+  options.path = buildDefaultPath(project);
   const parsedPath = parseName(options.path, options.name);
   options.name = parsedPath.name + '-card';
-  options.path = parsedPath.path;
   return host;
 }
+
+/*
+This function is the first function executed when schema is thrown.
+In that case, an initial path is prepared and files on the files folder are
+copied at result path.
+Note: dasherize function convert the name given by params in a valid name to file.
+ */
 export function init(options: any): Rule {
   return (tree: Tree, _context: SchematicContext) => {
     setupOptions(tree, options);
-
     const movePath = normalize(options.path + '/' + strings.dasherize(options.name));
-
     const templateSource = apply(url('./files'), [
-      filter(path => !path.endsWith('.spec.ts')),
       template({
         ...strings,
         ...options,
